@@ -1,9 +1,9 @@
 import json
 import random
 
-train_source = open("train.json", "r")
-valid_source = open("valid.json", "r")
-test_source = open("test.json", "r")
+train_source = open("entangled_train.json", "r")
+valid_source = open("entangled_valid.json", "r")
+test_source = open("entangled_test.json", "r")
 
 positive_message_sample_size = 1000000
 positive_session_sample_size = 500000
@@ -63,6 +63,9 @@ def generate_sample(source):
     session_samples.extend(positive_session_samples)
     session_samples.extend(negative_session_samples)
     random.shuffle(session_samples)
+
+    print("{} positive and {} negative message samples captured".format(len(positive_message_samples), len(negative_message_samples)))
+    print("{} positive and {} negative session samples captured".format(len(positive_session_samples), len(negative_session_samples)))
 
     return message_samples, session_samples
 
