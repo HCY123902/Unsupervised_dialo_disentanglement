@@ -1,23 +1,42 @@
 import json
 import random
 
-train_source = open("entangled_train.json", "r")
-valid_source = open("entangled_valid.json", "r")
-test_source = open("entangled_test.json", "r")
+train_source_json = open("entangled_train.json", "r")
+valid_source_json = open("entangled_dev.json", "r")
+test_source_json = open("entangled_test.json", "r")
 
-positive_message_sample_size = 1000000
-positive_session_sample_size = 500000
+percentage = 0.1
 
-negative_message_sample_size = 2000000
-negative_session_sample_size = 1000000
+positive_message_sample_size = 1000000 * percentage
+positive_session_sample_size = 500000 * percentage
+
+negative_message_sample_size = 2000000 * percentage
+negative_session_sample_size = 1000000 * percentage
+
+t = json.load(train_source_json)
+train_source = t[:int(percentage * len(t))]
+
+v = json.load(valid_source_json)
+valid_source = v[:int(percentage * len(v))]
+
+e = json.load(test_source_json)
+test_source = e[:int(percentage * len(v))]
+
+sampled_train_json = open("entangled_train_{}_percent.json".format(int(percentage * 100)), "w")
+sampled_valid_json = open("entangled_valid_{}_percent.json".format(int(percentage * 100)), "w")
+sampled_test_json = open("entangled_test_{}_percent.json".format(int(percentage * 100)), "w")
+
+json.dump(train_source, sampled_train_json)
+json.dump(valid_source, sampled_valid_json)
+json.dump(test_source, sampled_test_json)
 
 def generate_sample(source):
-    dialogues = json.load(source)
+    dialogues = source
     positive_message_samples = []
     positive_session_samples = []
 
     for dialogue in dialogues:
-        if len(positive_message_samples) > positive_message_sample_size and len(positive_session_samples) > positive_session_sample_size:
+        if len(positive_message_samples) >= positive_message_sample_size and len(positive_session_samples) >= positive_session_sample_size:
             break
     
         speakers = {}
@@ -39,20 +58,22 @@ def generate_sample(source):
     negative_session_samples = []
 
     for i, dialogue in enumerate(dialogues[:-1]):
-        if len(negative_message_samples) > negative_message_sample_size and len(negative_session_samples) > negative_session_sample_size:
+        if len(negative_message_samples) >= negative_message_sample_size and len(negative_session_samples) >= negative_session_sample_size:
             break
         
-        left_position = int(random.random() * len(dialogue))
-        dialogue_position = int(random.random() * (len(dialogues) - (i + 1))) + (i + 1)
-        right_position = int(random.random() * len(dialogues[dialogue_position]))
-        if len(negative_message_samples) <= negative_message_sample_size:
-            negative_message_samples.append([dialogue[left_position]["utterance"], dialogue[right_position]["utterance"], 0])
+        # left_position = int(random.random() * len(dialogue))
+        for j, turn in enumerate(dialogue):
+            for k in range(5):
+                dialogue_position = int(random.random() * (len(dialogues) - (i + 1))) + (i + 1)
+                right_position = int(random.random() * len(dialogues[dialogue_position]))
+                if len(negative_message_samples) <= negative_message_sample_size:
+                    negative_message_samples.append([turn["utterance"], dialogues[dialogue_position][right_position]["utterance"], 0])
 
-        if len(negative_session_samples) <= negative_session_sample_size:
-            messages = [[t["speaker"], t["utterance"]] for t in dialogue[:left_position + 1]]
-            current_turn = dialogues[dialogue_position][right_position]
-            sample = {"messages": messages, "current_message": [current_turn["speaker"], current_turn["utternace"]], "label": 0}
-            negative_session_samples.append(sample)
+                if len(negative_session_samples) <= negative_session_sample_size:
+                    messages = [[t["speaker"], t["utterance"]] for t in dialogue[:j + 1]]
+                    current_turn = dialogues[dialogue_position][right_position]
+                    sample = {"messages": messages, "current_message": [current_turn["speaker"], current_turn["utterance"]], "label": 0}
+                    negative_session_samples.append(sample)
     
     message_samples = []
     message_samples.extend(positive_message_samples)
@@ -73,12 +94,12 @@ train_message_samples, train_session_samples = generate_sample(train_source)
 valid_message_samples, valid_session_samples = generate_sample(valid_source)
 test_message_samples, test_session_samples = generate_sample(test_source)
 
-train_message = open("train_message.json", "w")
-train_session = open("train_session.json", "w")
-valid_message = open("train_message.json", "w")
-valid_session = open("train_session.json", "w")
-test_message = open("train_message.json", "w")
-test_session = open("train_session.json", "w")
+train_message = open("train_message_{}_percent.json".format(int(percentage * 100)), "w")
+train_session = open("train_session_{}_percent.json".format(int(percentage * 100)), "w")
+valid_message = open("valid_message_{}_percent.json".format(int(percentage * 100)), "w")
+valid_session = open("valid_session_{}_percent.json".format(int(percentage * 100)), "w")
+test_message = open("test_message_{}_percent.json".format(int(percentage * 100)), "w")
+test_session = open("test_session_{}_percent.json".format(int(percentage * 100)), "w")
 
 json.dump(train_message_samples, train_message)
 json.dump(train_session_samples, train_session)
@@ -86,4 +107,3 @@ json.dump(valid_message_samples, valid_message)
 json.dump(valid_session_samples, valid_session)
 json.dump(test_message_samples, test_message)
 json.dump(test_session_samples, test_session)
-

@@ -59,7 +59,7 @@ def get_args():
     parser.add_argument('--data_type', type=str, default="train")
     parser.add_argument('--output_dir', type=str, default="./output")
     parser.add_argument('--cache_dir', type=str, default="cached")
-    parser.add_argument('--glove_path', type=str, default='../../../../files/glove/glove.840B.300d.txt')
+    parser.add_argument('--glove_path', type=str, default='../../glove/glove.840B.300d.txt')
     parser.add_argument('--cached_input_dir', type=str, default="cached_input")
     parser.add_argument('--seq_max_len', type=int, default=100, \
                         help="the maximum length of a sequence")
