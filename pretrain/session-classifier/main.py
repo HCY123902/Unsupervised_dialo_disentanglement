@@ -9,6 +9,8 @@ import numpy as np
 import random
 import gc 
 
+os.environ["CUDA_VISIBLE_DEVICES"] = "4"
+
 import torch
 import transformers 
 from transformers import BertTokenizer
