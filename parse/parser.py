@@ -5,13 +5,14 @@ train_source_json = open("entangled_train.json", "r")
 valid_source_json = open("entangled_dev.json", "r")
 test_source_json = open("entangled_test.json", "r")
 
-percentage = 0.1
+percentage = 1
 
 positive_message_sample_size = 1000000 * percentage
 positive_session_sample_size = 500000 * percentage
 
 negative_message_sample_size = 2000000 * percentage
-negative_session_sample_size = 1000000 * percentage
+# negative_session_sample_size = 1000000 * percentage
+negative_session_sample_size = 60000
 
 t = json.load(train_source_json)
 train_source = t[:int(percentage * len(t))]
@@ -50,8 +51,17 @@ def generate_sample(source):
                         positive_message_samples.append([turns[i]["utterance"], turns[j]["utterance"], 1])
 
                 if len(positive_session_samples) <= positive_session_sample_size and  i >= 1:
-                    messages = [[t["speaker"], t["utterance"]] for t in dialogue[:turns[i]["position"]]]
-                    sample = {"messages": messages, "current_message": [speaker, turns[i]["utterance"]], "label": 1}
+                    if len(turns[i]["utterance"].strip()) < 1:
+                        print("Detected message {} with length {}".format(turns[i]["utterance"], len(turns[i]["utterance"])))
+                        continue
+                    
+                    messages = [[t["speaker"], t["utterance"], t["label"]] for t in dialogue[:turns[i]["position"]] if len(t["utterance"].strip()) >= 1]
+                    if len(messages) <= 0:
+                        print("Detected context with length {}".format(len(messages)))
+                        continue
+                    
+                        
+                    sample = {"messages": messages, "current_message": [speaker, turns[i]["utterance"], turns[i]["label"]], "label": 1}
                     positive_session_samples.append(sample)
 
     negative_message_samples = []
@@ -70,9 +80,17 @@ def generate_sample(source):
                     negative_message_samples.append([turn["utterance"], dialogues[dialogue_position][right_position]["utterance"], 0])
 
                 if len(negative_session_samples) <= negative_session_sample_size:
-                    messages = [[t["speaker"], t["utterance"]] for t in dialogue[:j + 1]]
                     current_turn = dialogues[dialogue_position][right_position]
-                    sample = {"messages": messages, "current_message": [current_turn["speaker"], current_turn["utterance"]], "label": 0}
+                    if len(current_turn["utterance"].strip()) < 1:
+                        print("Detected message {} with length {}".format(current_turn["utterance"], len(current_turn["utterance"])))
+                        continue
+                    
+                    messages = [[t["speaker"], t["utterance"], t["label"]] for t in dialogue[:j + 1] if len(t["utterance"].strip()) >= 1]
+                    if len(messages) <= 0:
+                        print("Detected context with length {}".format(len(messages)))
+                        continue
+                    
+                    sample = {"messages": messages, "current_message": [current_turn["speaker"], current_turn["utterance"], current_turn["label"]], "label": 0}
                     negative_session_samples.append(sample)
     
     message_samples = []
