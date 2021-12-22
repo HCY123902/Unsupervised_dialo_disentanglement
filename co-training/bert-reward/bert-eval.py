@@ -8,6 +8,8 @@ import numpy as np
 from time import strftime, gmtime
 import logging
 
+os.environ["CUDA_VISIBLE_DEVICES"] = "4"
+
 import torch 
 import torch.nn as nn
 from torch.utils.data import DataLoader, SequentialSampler
